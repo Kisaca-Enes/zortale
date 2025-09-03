@@ -1,58 +1,68 @@
-import openfl.display.Sprite;
-import openfl.display.Bitmap;
-import openfl.display.BitmapData;
-import openfl.Lib;
-import openfl.events.Event;
-import openfl.utils.Assets;
-import openfl.events.KeyboardEvent;
-import openfl.ui.Keyboard;
+package states;
 
-class Main extends Sprite {
-    
-    var fotolar:Array<String> = ["assets/1.png", "assets/2.png", "assets/3.png", "assets/4.png", "assets/5.png"];
-    var index:Int = 0;
-    var bitmap:Bitmap;
-    var zaman:Float = 0;
+import flixel.FlxState;
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.util.FlxTimer;
+import flixel.input.keyboard.FlxKey;
+import flixel.util.FlxColor;
 
-    public function new() {
-        super();
+class SlideshowState extends FlxState
+{
+    public var fotolar:Array<String> = [
+        "assets/images/1.png",
+        "assets/images/2.png",
+        "assets/images/3.png",
+        "assets/images/4.png",
+        "assets/images/5.png"
+    ];
 
+    public var index:Int = 0;
+    public var current:FlxSprite;
+
+    override public function create():Void
+    {
+        super.create();
+
+        FlxG.camera.bgColor = FlxColor.BLACK;
+
+        // İlk resmi yükle
         goster();
 
-        // ESC tuşuna basıldığında çıkış
-        Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, function(e:KeyboardEvent) {
-            if (e.keyCode == Keyboard.ESCAPE) {
-                Lib.exit();
+        // ESC tuşuna basınca çıkış
+        FlxG.keys.preventDefaultKeys = [FlxKey.ESCAPE];
+    }
+
+    function goster():Void
+    {
+        if (current != null) remove(current);
+
+        current = new FlxSprite(0, 0, fotolar[index]);
+        current.setGraphicSize(FlxG.width, FlxG.height);
+        current.updateHitbox();
+        add(current);
+
+        new FlxTimer().start(5, function(t:FlxTimer)
+        {
+            index++;
+            if (index < fotolar.length)
+            {
+                goster();
+            }
+            else
+            {
+                FlxG.switchState(new MenuState());
             }
         });
-
-        // her frame çağrılır
-        Lib.current.stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
     }
 
-    function onEnterFrame(e:Event):Void {
-        zaman += 1 / stage.frameRate; // saniye say
-        if (zaman >= 5) { // 5 saniye geçti
-            zaman = 0;
-            index++;
-            if (index < fotolar.length) {
-                goster();
-            } else {
-                // hikaye bittiğinde Menu.hx çağır
-                Lib.current.removeChild(this);
-                Lib.current.addChild(new Menu());
-            }
-        }
-    }
+    override public function update(elapsed:Float):Void
+    {
+        super.update(elapsed);
 
-    function goster():Void {
-        if (bitmap != null) {
-            removeChild(bitmap);
+        if (FlxG.keys.justPressed.ESCAPE)
+        {
+            FlxG.exit();
         }
-        var data:BitmapData = Assets.getBitmapData(fotolar[index]);
-        bitmap = new Bitmap(data);
-        bitmap.width = stage.stageWidth;
-        bitmap.height = stage.stageHeight;
-        addChild(bitmap);
     }
 }
